@@ -9,7 +9,7 @@ public class PorterStemmer {
     }
 
     private boolean endsWith(String str) {
-        int len = str.length();
+        int len = str.length() - 1;
         int index = end - len + 1;
         if (index >= 0) {
             for (int i = 0; i < len; i++) {
@@ -41,36 +41,36 @@ public class PorterStemmer {
         }
     }
 
-    private boolean IsConsonant(int index) {
+    private boolean isConsonant(int index) {
         if ("aeiou".contains(String.valueOf(wordArray[index]))) {
             return false; // гласная буква
         }
 
-        if (wordArray[index] == 'y' || index == 0 || !IsConsonant(wordArray[index - 1])) {
+        if (wordArray[index] == 'y' && (index == 0 || !isConsonant(index - 1))) {
             return true; // согласная буква
         }
 
-        return false; // гласноя буква
+        return false; // гласная буква
     }
 
-    private boolean isConsonantLetter(char c) {
+/*    private boolean isConsonantLetter(char c) {
         return "bcdfghjklmnpqrstvwxyz".indexOf(c) != -1;
-    }
+    }*/
 
     private int consonantSequenceCount() {
         int m = 0;
         int index = 0;
 
-        for (; index <= stem && IsConsonant(index); index++) ;
+        for (; index <= stem && isConsonant(index); index++) ;
         if (index > stem)
             return 0;
 
         for (index++; ; index++) {
-            for (; index <= stem && !IsConsonant(index); index++) ;
+            for (; index <= stem && !isConsonant(index); index++) ;
             if (index > stem)
                 return m;
 
-            for (index++, m++; index <= stem && IsConsonant(index); index++) ;
+            for (index++, m++; index <= stem && isConsonant(index); index++) ;
             if (index > stem)
                 return m;
         }
@@ -78,17 +78,17 @@ public class PorterStemmer {
 
     private boolean vowelInStem() {
         for (int i = 0; i <= stem; i++)
-            if (!IsConsonant(i))
+            if (!isConsonant(i))
                 return true;
         return false;
     }
 
     private boolean endsWithDoubleConsonant() {
-        return end > 0 && wordArray[end] == wordArray[end - 1] && IsConsonant(end);
+        return end > 0 && wordArray[end] == wordArray[end - 1] && isConsonant(end);
     }
 
     private boolean precededByCVC(int index) {
-        if (index < 2 || !IsConsonant(index) || IsConsonant(index - 1) || !IsConsonant(index - 2))
+        if (index < 2 || !isConsonant(index) || isConsonant(index - 1) || !isConsonant(index - 2))
             return false;
 
         return !"wxy".contains(String.valueOf(wordArray[index]));
@@ -112,7 +112,7 @@ public class PorterStemmer {
     }*/
     //////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public String StemWord(String word) {
+    public String stemWord(String word) {
         if (isNullOrWhiteSpace(word) || word.length() < 3) {
             return word;
         }
@@ -121,17 +121,18 @@ public class PorterStemmer {
         stem = 0;
         end = word.length() - 1;
 
-        Step1();
-        Step2();
-        Step3();
-        Step4();
-        Step5();
-        Step6();
+        step1();
+        step2();
+        step3();
+        step4();
+        step5();
+        step6();
+        step7();
 
         return new String(wordArray, 0, end + 1);
     }
 
-    private void Step1() {
+    private void step1() {
         if (wordArray[end] == 's') {
             if (endsWith("sses")) {
                 truncate(2);
@@ -141,7 +142,9 @@ public class PorterStemmer {
                 truncate();
             }
         }
+    }
 
+    private void step2() {
         if (endsWith("eed")) {
             if (consonantSequenceCount() > 0)
                 truncate();
@@ -164,13 +167,13 @@ public class PorterStemmer {
         }
     }
 
-    private void Step2() {
+    private void step3() {
         if (endsWith("y") && vowelInStem()) {
             overwriteEnding("i");
         }
     }
 
-    private void Step3() {
+    private void step4() {
         switch (wordArray[end - 1]) {
             case 'a':
                 if (replaceEnding("ational", "ate")) break;
@@ -212,7 +215,7 @@ public class PorterStemmer {
         }
     }
 
-    private void Step4() {
+    private void step5() {
         switch (wordArray[end]) {
             case 'e':
                 if (replaceEnding("icate", "ic")) break;
@@ -232,7 +235,7 @@ public class PorterStemmer {
         }
     }
 
-    private void Step5() {
+    private void step6() {
         switch (wordArray[end - 1]) {
             case 'a':
                 if (endsWith("al")) break;
@@ -286,7 +289,7 @@ public class PorterStemmer {
         }
     }
 
-    private void Step6() {
+    private void step7() {
         stem = end;
         if (wordArray[end] == 'e') {
             int m = consonantSequenceCount();
@@ -295,7 +298,7 @@ public class PorterStemmer {
             }
         }
 
-        if(wordArray[end]=='l'&&endsWithDoubleConsonant()&&consonantSequenceCount()>1){
+        if (wordArray[end] == 'l' && endsWithDoubleConsonant() && consonantSequenceCount() > 1) {
             truncate();
         }
     }
