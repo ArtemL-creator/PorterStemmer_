@@ -15,7 +15,7 @@ public class Main {
 
             PorterStemmer recWord = new PorterStemmer();
 
-            System.out.println("The received word: " + recWord.stemWord(word));
+            System.out.println("The received word: " + "\u001B[35m" + recWord.stemWord(word) + "\u001B[0m");
         }
 
     }

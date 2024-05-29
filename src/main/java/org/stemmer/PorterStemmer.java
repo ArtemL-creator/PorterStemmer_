@@ -9,11 +9,11 @@ public class PorterStemmer {
     }
 
     private boolean endsWith(String str) {
-        int len = str.length() - 1;
+        int len = str.length();
         int index = end - len + 1;
-        if (index >= 0) {
+        if (index >= 0 && end >= len - 1) {
             for (int i = 0; i < len; i++) {
-                if (wordArray[index + i] != str.charAt(i)) {
+                if (index + i >= 0 && wordArray[index + i] != str.charAt(i)) {
                     return false;
                 }
             }
@@ -37,49 +37,57 @@ public class PorterStemmer {
         int index = stem + 1;
         for (int i = 0; i < len; i++) {
             wordArray[index + i] = str.charAt(i);
-            end = stem + len;
         }
+        end = stem + len;
     }
 
     private boolean isConsonant(int index) {
-        if ("aeiou".contains(String.valueOf(wordArray[index]))) {
-            return false; // гласная буква
+        switch (wordArray[index]) {
+            case 'a':
+            case 'e':
+            case 'i':
+            case 'o':
+            case 'u':
+                return false;
+            case 'y':
+                return (index == 0) ? true : !isConsonant(index - 1);
+            default:
+                return true;
         }
-
-        if (wordArray[index] == 'y' && (index == 0 || !isConsonant(index - 1))) {
-            return true; // согласная буква
-        }
-
-        return false; // гласная буква
     }
 
-/*    private boolean isConsonantLetter(char c) {
-        return "bcdfghjklmnpqrstvwxyz".indexOf(c) != -1;
-    }*/
-
     private int consonantSequenceCount() {
-        int m = 0;
+        int n = 0;
         int index = 0;
 
-        for (; index <= stem && isConsonant(index); index++) ;
-        if (index > stem)
-            return 0;
-
-        for (index++; ; index++) {
-            for (; index <= stem && !isConsonant(index); index++) ;
-            if (index > stem)
-                return m;
-
-            for (index++, m++; index <= stem && isConsonant(index); index++) ;
-            if (index > stem)
-                return m;
+        while (true) {
+            if (index > stem) return n;
+            if (!isConsonant(index)) break;
+            index++;
+        }
+        index++;
+        while (true) {
+            while (true) {
+                if (index > stem) return n;
+                if (isConsonant(index)) break;
+                index++;
+            }
+            index++;
+            n++;
+            while (true) {
+                if (index > stem) return n;
+                if (!isConsonant(index)) break;
+                index++;
+            }
+            index++;
         }
     }
 
     private boolean vowelInStem() {
         for (int i = 0; i <= stem; i++)
-            if (!isConsonant(i))
+            if (!isConsonant(i)) {
                 return true;
+            }
         return false;
     }
 
@@ -88,10 +96,14 @@ public class PorterStemmer {
     }
 
     private boolean precededByCVC(int index) {
-        if (index < 2 || !isConsonant(index) || isConsonant(index - 1) || !isConsonant(index - 2))
+        if (index < 2 || !isConsonant(index) || isConsonant(index - 1) || !isConsonant(index - 2)) {
             return false;
+        }
+        if (wordArray[index] == 'w' || wordArray[index] == 'x' || wordArray[index] == 'y') {
+            return false;
+        }
 
-        return !"wxy".contains(String.valueOf(wordArray[index]));
+        return true;
     }
 
     private boolean replaceEnding(String suffix, String str) {
@@ -136,7 +148,7 @@ public class PorterStemmer {
         if (wordArray[end] == 's') {
             if (endsWith("sses")) {
                 truncate(2);
-            } else if (endsWith("ies'")) {
+            } else if (endsWith("ies")) {
                 overwriteEnding("i");
             } else if (wordArray[end - 1] != 's') {
                 truncate();
@@ -146,8 +158,9 @@ public class PorterStemmer {
 
     private void step2() {
         if (endsWith("eed")) {
-            if (consonantSequenceCount() > 0)
+            if (consonantSequenceCount() > 0) {
                 truncate();
+            }
         } else if ((endsWith("ed") || endsWith("ing")) && vowelInStem()) {
             end = stem;
             if (endsWith("at")) {
